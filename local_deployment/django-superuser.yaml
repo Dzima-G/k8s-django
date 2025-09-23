@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-createsuperuser
+spec:
+  template:
+    spec:
+      containers:
+        - name: createsuperuser
+          image: dzimag/django_app:1.0
+          command: ["python", "manage.py", "createsuperuser", "--noinput"]
+          envFrom:
+            - secretRef:
+                name: django-secrets
+      restartPolicy: OnFailure
