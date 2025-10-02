@@ -30,7 +30,7 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 
 ---
 
-### Локальный запуск с использованием кластера Minikube
+# Локальный запуск с использованием кластера Minikube
 
 Для запуска необходимы:
 
@@ -141,4 +141,17 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 9. **Проверить доступность сайта:**
 
     http://your-domain.test/
-    
+
+---
+# Запуск на облачном кластере
+### Dev версия
+1. **Запуск Nginx:** 
+    ```sh    
+    kubectl apply -f nginx.yaml
+    kubectl apply -f nginx-service.yaml
+    ```
+* *Все команды выполнять в вашем namespace, например edu-dmitrij-gukalin:*
+    ```sh    
+      kubectl apply -f nginx.yaml -n edu-dmitrij-gukalin
+      kubectl apply -f nginx-service.yaml -n edu-dmitrij-gukalin
+    ```

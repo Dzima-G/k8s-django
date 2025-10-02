@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: main-nginx
+  namespace: edu-dmitrij-gukalin
+  labels:
+    app: main-nginx
+spec:
+  volumes:
+    - name: nginx-config
+      configMap:
+        name: main-nginx-config
+        items:
+          - key: nginx.conf
+            path: nginx.conf
+  containers:
+    - name: nginx
+      image: nginx:1.16.1
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: nginx-config
+          readOnly: true
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+  restartPolicy: Always
