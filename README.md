@@ -27,7 +27,9 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 - **`DATABASE_URL`** — адрес для подключения к базе данных PostgreSQL.  
   Другие СУБД не поддерживаются.  
   [Формат записи](https://github.com/jacobian/dj-database-url#url-schema)
-
+- 
+Не обязательные переменные окружения:
+- **`POSTGRES_SSL_SERT`** - сертификат для подключения к [Yandex Cloud Managed PostgreSQL](https://yandex.cloud/ru/docs/managed-postgresql/operations/connect) в кодировке **base64**.
 ---
 
 # Локальный запуск с использованием кластера Minikube
@@ -144,7 +146,36 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 
 ---
 # Запуск на облачном кластере
-### Dev версия
+## Передача чувствительных данных (Secret)
+1. Cертификат подключения к PostgresDB Yandex Cloud Managed PostgreSQL:
+   * Вариант 1:
+   Создайте файл `cloud-deoloyment/dev/postgres-ssl-sert.yaml`, заменив значение на своё (*см. раздел "Переменные окружения"*):
+       ```
+       apiVersion: v1
+       kind: Secret
+       metadata:
+         name: postgres-ssl-cert
+         namespace: edu-dmitrij-gukalin
+       data:
+         root.crt: |
+          <сюда вставь значение POSTGRES_SSL_SERT в base64>
+       ```
+   
+       ```sh    
+       kubectl apply -f postgres-ssl-sert.yaml
+       ```
+   * Вариант 2: Заменив значение на своё (*см. раздел "Переменные окружения"*): 
+       ```sh    
+       kubectl create secret generic postgres-ssl-cert \
+         -n edu-dmitrij-gukalin \
+         --from-literal=root.crt='<сюда вставь значение POSTGRES_SSL_SERT в base64>'
+       ```
+     Примечание:
+     * Если ты используешь Windows PowerShell, то значение следует заключать в двойные кавычки " ", а не в одинарные.
+     * Если ты на Linux / WSL / macOS, — безопаснее использовать одинарные ' '.
+   
+---
+## Dev версия
 1. **Запуск Nginx:** 
     ```sh    
     kubectl apply -f nginx.yaml

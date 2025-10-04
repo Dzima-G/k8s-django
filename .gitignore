@@ -2,3 +2,5 @@
 __pycache__/
 *.py[cod]
 *$py.class
+/cloud_deployment/dev/postgres-ssl-cert.yaml
+/cloud_deployment/dev/test-psql-client.yaml
