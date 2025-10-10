@@ -11,10 +11,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD-OwOtBep9Frut}
 
   web:
-    build: backend_main_django
+    build:
+      context: ../../backend_main_django
+      dockerfile: Dockerfile.unit-nginx
     image: django_app
     volumes:
-      - ./backend_main_django:/code
+      - ../../backend_main_django:/code
     environment: 
       SECRET_KEY: ${WEB_SECRET_KEY-REPLACE_ME}
       DEBUG: ${WEB_DEBUG-TRUE}

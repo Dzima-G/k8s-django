@@ -4,3 +4,6 @@ __pycache__/
 *$py.class
 /cloud_deployment/dev/postgres-ssl-cert.yaml
 /cloud_deployment/dev/test-psql-client.yaml
+/root.crt
+/rootcrt.b64
+/instructions.txt

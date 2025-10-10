@@ -32,7 +32,61 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 - **`POSTGRES_SSL_SERT`** - сертификат для подключения к [Yandex Cloud Managed PostgreSQL](https://yandex.cloud/ru/docs/managed-postgresql/operations/connect) в кодировке **base64**.
 ---
 
-# Локальный запуск с использованием кластера Minikube
+# Запустить сайт для локальной разработки
+## Запуск локально в Doker
+1. **Подготовить окружение к локальной разработке:**
+
+    Для запуска необходим установленный [Docker Desktop](https://www.docker.com/get-started/).
+2. **Запустить базу данных и сайт:**
+    ```shell
+    cd local_deployment/docker_compose # перейти в каталог Compose-файлом
+    docker compose up # собрать образ
+    ```
+ 
+3. Создать миграции и суперпользователя (в отдельном терминале):
+    Перейти в каталог с `docker-compose`:
+    ```shell
+    cd local_deployment/docker_compose # перейти в каталог Compose-файлом
+    docker compose run --rm web ./manage.py migrate  # создаём/обновляем таблицы в БД
+    docker compose run --rm web ./manage.py createsuperuser  # создаём в БД учётку суперпользователя
+    ```
+    
+    После запуска сайт будет доступен по адресу: [http://127.0.0.1:8080](http://127.0.0.1:8080).
+
+    Админка - [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
+    
+
+## Как вести разработку
+Все файлы с кодом django смонтированы внутрь docker-контейнера, чтобы Nginx Unit сразу видел изменения в коде и не
+требовал постоянно пересборки docker-образа -- достаточно перезапустить сервисы Docker Compose.
+
+1. **Обновить приложение:**
+
+    ```shell
+    git pull
+    cd local_deployment/docker_compose # перейти в каталог Compose-файлом
+    docker compose build # пересобирает образы
+    ```
+
+    После обновления — примените миграции:
+
+    ```shell
+    cd local_deployment/docker_compose # перейти в каталог Compose-файлом
+    docker compose run --rm web ./manage.py migrate # обновить миграции
+    ```
+   
+2. **Добавить библиотеку в зависимости:**
+
+    Добавьте пакет в `requirements.txt` и пересоберите образ для веб-сервиса:
+
+    ```shell
+    docker compose build web # пересобирает образ для сервиса web
+    ```
+**Примечание:**
+Каталог local_deployment/docker_compose служит для локального запуска проекта в Docker.
+
+---
+## Запуск локально с использованием кластера Minikube
 
 Для запуска необходимы:
 
@@ -45,17 +99,17 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 
 1. **Запустить кластер Minikube:**
 
-    ```sh
+    ```shell
     minikube start --driver=virtualbox
     ```
     * *Вместо docker можно использовать другой драйвер (например, docker), если он у вас настроен:*
 
-        ```sh
+        ```shell
         minikube start --driver=docker
         ```
 2. **Передача чувствительных данных:**
 
-   Создайте файл `local_deployment/secrets.yaml`, заменив значения переменных на свои (*см. раздел переменные окружения*):
+   Создайте файл `local_deployment/k8s_minikube/secrets.yaml`, заменив значения переменных на свои (*см. раздел переменные окружения*):
 
     ```
     apiVersion: v1
@@ -74,12 +128,13 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
     ```
 
    Примените:
-    ```sh
+    ```shell
+    cd local_deployment/k8s_minikube # перейти в каталог c манифестом
     kubectl apply -f kubernetes/secrets.yaml
     ```
 3. **Запуск базы данных PostgreSQL (*в Minikube*):**
     1. Установите Helm [см. документацию Helm](https://helm.sh/)
-    2. Создайте файл `local_deployment/postgres-values.yaml` и укажите свои данные доступа::
+    2. Создайте файл `local_deployment/k8s_minikube/postgres-values.yaml` и укажите свои данные доступа::
         ```
         architecture: "standalone"
 
@@ -89,28 +144,28 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
             database: "nameDB"
         ```
     3. Установите PostgreSQL через Helm:
-        ```sh
-        helm install my-postgres oci://registry-1.docker.io/bitnamicharts/postgresql -f local_deployment/postgres-values.yaml  
+        ```shell
+        helm install my-postgres oci://registry-1.docker.io/bitnamicharts/postgresql -f local_deployment/k8s_minikube/postgres-values.yaml  
         ```
 4. **Запуск Django-приложения и сервиса:**
-    ```sh
-    kubectl apply -f local_deployment/django-deployment.yaml
-    kubectl apply -f local_deployment/django-service.yaml
+    ```shell
+    kubectl apply -f local_deployment/k8s_minikube/django-deployment.yaml
+    kubectl apply -f local_deployment/k8s_minikube/django-service.yaml
     ```
 5. **Выполнить миграции:**
-    ```sh    
-    kubectl apply -f local_deployment/django-migrate.yaml
+    ```shell    
+    kubectl apply -f local_deployment/k8s_minikube/django-migrate.yaml
     ```
 6. **Создать суперпользователя:**
-    ```sh    
-    kubectl apply -f local_deployment/django-superuser.yaml
+    ```shell    
+    kubectl apply -f local_deployment/k8s_minikube/django-superuser.yaml
     ```
 7. **(*Опционально)* Настроить Ingress:**
     1. Установить ingress Controllers [см. таблицу доступных контролееров](https://docs.google.com/spreadsheets/d/191WWNpjJ2za6-nbG4ZoUMXMpUK8KlCIosvQB0f-oq3k/edit?gid=907731238#gid=907731238), например [Сontour](https://projectcontour.io/getting-started/):
-        ```sh    
+        ```shell    
         kubectl apply -f https://projectcontour.io/quickstart/contour.yaml
         ```
-    2. Отредактируйте файл `local_deployment/ingress-hosts.yaml`, укажите свой домен:
+    2. Отредактируйте файл `local_deployment/k8s_minikube/ingress-hosts.yaml`, укажите свой домен:
         ```
         ...
         spec:
@@ -120,7 +175,7 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
         ```
     3. При локальной разработке:
         - Узнайте внешний IP Minikube:
-            ```sh
+            ```shell
             minikube ip
             ```
         пример ответа:
@@ -133,12 +188,12 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
             192.168.59.100   your-domain.test
             ```
     4. Примените манифест Ingress::
-        ```sh
-        kubectl apply -f local_deployment/ingress-hosts.yaml
+        ```shell
+        kubectl apply -f local_deployment/k8s_minikube/ingress-hosts.yaml
         ```
 8. **Настроить очистку сессий (*CronJob*):**
-    ```sh
-    kubectl apply -f local_deployment/django-clearsessions.yaml
+    ```shell
+    kubectl apply -f local_deployment/k8s_minikube/django-clearsessions.yaml
     ```   
 9. **Проверить доступность сайта:**
 
@@ -161,11 +216,11 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
           <сюда вставь значение POSTGRES_SSL_SERT в base64>
        ```
    
-       ```sh    
+       ```shell    
        kubectl apply -f postgres-ssl-sert.yaml
        ```
    * Вариант 2: Заменив значение на своё (*см. раздел "Переменные окружения"*): 
-       ```sh    
+       ```shell   
        kubectl create secret generic postgres-ssl-cert \
          -n edu-dmitrij-gukalin \
          --from-literal=root.crt='<сюда вставь значение POSTGRES_SSL_SERT в base64>'
@@ -177,12 +232,32 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 ---
 ## Dev версия
 1. **Запуск Nginx:** 
-    ```sh    
+    ```shell   
     kubectl apply -f nginx.yaml
     kubectl apply -f nginx-service.yaml
     ```
-* *Все команды выполнять в вашем namespace, например edu-dmitrij-gukalin:*
-    ```sh    
-      kubectl apply -f nginx.yaml -n edu-dmitrij-gukalin
-      kubectl apply -f nginx-service.yaml -n edu-dmitrij-gukalin
+    *Все команды выполнять в вашем namespace, например edu-dmitrij-gukalin:*
+    ```shell   
+    kubectl apply -f nginx.yaml -n edu-dmitrij-gukalin
+    kubectl apply -f nginx-service.yaml -n edu-dmitrij-gukalin
+    ```
+2. **Сборка и публикация Docker-образов:**
+    
+    **Получить короткий хэш текущего коммита:**
+    ```shell   
+    git rev-parse --short HEAD
+    ```    
+
+    **Сборка образа:**
+    ```   
+    docker build -f Dockerfile -t <DOCKER_USERNAME>/<IMAGE_NAME>:$(git rev-parse --short HEAD) .
+    ```
+    *Примечание:*
+   - `<DOCKER_USERNAME>` ваш логин Docker Hub,  
+   - `<IMAGE_NAME>` — имя вашего образа (например, `django-app-k8s`),
+   - `<TAG>` — можно заменить на любой *(например, v1.0 или latest)*
+   
+    **Отправить образ в Docker Hub:**
+    ```   
+    docker push <DOCKER_USERNAME>/<IMAGE_NAME>:$(git rev-parse --short HEAD)
     ```
