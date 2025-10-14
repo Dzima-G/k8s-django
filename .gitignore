@@ -7,3 +7,5 @@ __pycache__/
 /root.crt
 /rootcrt.b64
 /instructions.txt
+/cloud_deployment/dev/django-secrets.yaml
+/cloud_deployment/dev/django-config.yaml

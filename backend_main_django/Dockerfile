@@ -11,10 +11,10 @@ RUN apt update && apt install -y gcc libpq-dev \
     && pip3 install -r requirements.txt
 
 COPY src /webapp/src
-WORKDIR /webapp/srcыф
+WORKDIR /webapp/src
 
 RUN SECRET_KEY=empty python manage.py collectstatic --noinput
 
-CMD ["gunicorn", "src.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "webapp.wsgi:application", "--bind", "0.0.0.0:8000"]
 
 EXPOSE 8000

@@ -8,7 +8,7 @@ Django. Таким образом Nginx Unit заменяет собой свя�
 Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 
 ---
-# Переменные окружения
+# 🔐 Переменные окружения
 
 Образ с Django считывает настройки из переменных окружения.  
 Создайте файл `.env` в корневом каталоге и запишите туда данные в формате: `ПЕРЕМЕННАЯ=значение`
@@ -33,7 +33,7 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 ---
 
 # Запустить сайт для локальной разработки
-## Запуск локально в Doker
+## 🐳 Запуск локально в Doker
 1. **Подготовить окружение к локальной разработке:**
 
     Для запуска необходим установленный [Docker Desktop](https://www.docker.com/get-started/).
@@ -56,7 +56,7 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
     Админка - [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/).
     
 
-## Как вести разработку
+## 🧩 Как вести разработку
 Все файлы с кодом django смонтированы внутрь docker-контейнера, чтобы Nginx Unit сразу видел изменения в коде и не
 требовал постоянно пересборки docker-образа -- достаточно перезапустить сервисы Docker Compose.
 
@@ -86,7 +86,7 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 Каталог local_deployment/docker_compose служит для локального запуска проекта в Docker.
 
 ---
-## Запуск локально с использованием кластера Minikube
+## ☸️ Запуск локально с использованием кластера Minikube
 
 Для запуска необходимы:
 
@@ -200,64 +200,117 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
     http://your-domain.test/
 
 ---
-# Запуск на облачном кластере
-## Передача чувствительных данных (Secret)
-1. Cертификат подключения к PostgresDB Yandex Cloud Managed PostgreSQL:
-   * Вариант 1:
-   Создайте файл `cloud-deoloyment/dev/postgres-ssl-sert.yaml`, заменив значение на своё (*см. раздел "Переменные окружения"*):
-       ```
-       apiVersion: v1
-       kind: Secret
-       metadata:
-         name: postgres-ssl-cert
-         namespace: edu-dmitrij-gukalin
-       data:
-         root.crt: |
-          <сюда вставь значение POSTGRES_SSL_SERT в base64>
-       ```
-   
-       ```shell    
-       kubectl apply -f postgres-ssl-sert.yaml
-       ```
-   * Вариант 2: Заменив значение на своё (*см. раздел "Переменные окружения"*): 
-       ```shell   
-       kubectl create secret generic postgres-ssl-cert \
-         -n edu-dmitrij-gukalin \
-         --from-literal=root.crt='<сюда вставь значение POSTGRES_SSL_SERT в base64>'
-       ```
-     Примечание:
-     * Если ты используешь Windows PowerShell, то значение следует заключать в двойные кавычки " ", а не в одинарные.
-     * Если ты на Linux / WSL / macOS, — безопаснее использовать одинарные ' '.
-   
+# ☸️ Запуск на облачном кластере
+
 ---
 ## Dev версия
-1. **Запуск Nginx:** 
-    ```shell   
-    kubectl apply -f nginx.yaml
-    kubectl apply -f nginx-service.yaml
-    ```
-    *Все команды выполнять в вашем namespace, например edu-dmitrij-gukalin:*
-    ```shell   
-    kubectl apply -f nginx.yaml -n edu-dmitrij-gukalin
-    kubectl apply -f nginx-service.yaml -n edu-dmitrij-gukalin
-    ```
-2. **Сборка и публикация Docker-образов:**
-    
-    **Получить короткий хэш текущего коммита:**
-    ```shell   
-    git rev-parse --short HEAD
-    ```    
+Используйте манифесты из каталога `cloud_deployment/dev/`.
 
-    **Сборка образа:**
-    ```   
-    docker build -f Dockerfile -t <DOCKER_USERNAME>/<IMAGE_NAME>:$(git rev-parse --short HEAD) .
-    ```
-    *Примечание:*
-   - `<DOCKER_USERNAME>` ваш логин Docker Hub,  
-   - `<IMAGE_NAME>` — имя вашего образа (например, `django-app-k8s`),
-   - `<TAG>` — можно заменить на любой *(например, v1.0 или latest)*
-   
-    **Отправить образ в Docker Hub:**
-    ```   
-    docker push <DOCKER_USERNAME>/<IMAGE_NAME>:$(git rev-parse --short HEAD)
-    ```
+---
+### 🔐 Секреты и конфигурация
+#### 1. Сертификат PostgreSQL (Yandex Cloud Managed PostgreSQL)
+**Файл:** `cloud_deployment/dev/postgres-ssl-cert.yaml`
+   ```yaml
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: postgres-ssl-cert
+     namespace: <YOU-NAMESPACE>
+   data:
+     root.crt: |
+      <значение POSTGRES_SSL_CERT в base64>
+   ```
+**Применение:**
+
+```shell
+  kubectl apply -f postgres-ssl-sert.yaml <YOU-NAMESPACE>
+```
+**Альтернатива:** 
+
+```shell
+  kubectl create secret generic postgres-ssl-cert \
+    -n <YOUR-NAMESPACE> \
+    --from-literal=root.crt='<POSTGRES_SSL_CERT в base64>'
+```
+#### 2. Django-секреты и конфиг
+**Файл: `cloud_deployment/dev/django-secrets.yaml`**
+
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: django-secrets
+  namespace: <YOUR-NAMESPACE>
+type: Opaque
+stringData:
+  SECRET_KEY: "<SECRET_KEY>"
+  DATABASE_URL: "postgres://<USER>:<PASS>@<HOST>:<PORT>/<DBNAME>"
+```
+**Файл: `cloud_deployment/dev/django-config.yaml`**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: django-config
+  namespace: <YOUR-NAMESPACE>
+data:
+  DJANGO_SETTINGS_MODULE: "webapp.settings"
+  DEBUG: "<DEBUG>"
+  ALLOWED_HOSTS: "127.0.0.1,localhost,<YOUR-DOMAIN>"
+```
+**Примените:**
+```shell
+  kubectl apply -f cloud_deployment/dev/django-secrets.yaml -n <YOUR-NAMESPACE>
+  kubectl apply -f cloud_deployment/dev/django-config.yaml -n <YOUR-NAMESPACE>
+```
+---
+### 🌐 Запуск Nginx:
+```
+kubectl apply -f nginx.yaml -n <YOU-NAMESPACE>
+kubectl apply -f nginx-service.yaml -n <YOU-NAMESPACE>
+```
+---
+### 🐳 Сборка и публикация Docker-образа
+
+```shell
+  git rev-parse --short HEAD
+  docker build -f Dockerfile -t <DOCKER_USERNAME>/<IMAGE_NAME>:$(git rev-parse --short HEAD) .
+  docker push <DOCKER_USERNAME>/<IMAGE_NAME>:$(git rev-parse --short HEAD)
+```
+
+### ⚙️ Запуск Django-приложения
+Отредактируйте манифесты:
+* `cloud_deployment/dev/django-services.yaml`
+* `cloud_deployment/dev/django-deployment.yaml`
+
+**Замените:**
+
+```yaml
+namespace: <YOUR-NAMESPACE>
+image: dzimag/django-app-k8s:latest
+```
+**Примените:**
+
+```shell
+  kubectl apply -f django-services.yaml -n <YOUR-NAMESPACE>
+  kubectl apply -f django-deployment.yaml -n <YOUR-NAMESPACE>
+```
+---
+**Выполните миграции внутри pod’a**
+
+Получите имя pod’a:
+```shell
+  kubectl get pods -n <YOUR-NAMESPACE>
+```
+Выполните миграции:
+```shell
+  kubectl exec -it <DJANGO-POD> -n <YOUR-NAMESPACE> -- python manage.py migrate
+```
+**Создайте суперпользователя**
+
+```shell
+  kubectl exec -it <DJANGO-POD> -n <YOUR-NAMESPACE> -- python manage.py createsuperuser
+```
+Подробнее см. [руководство по настройке](./getting-started.md)

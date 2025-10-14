@@ -14,7 +14,6 @@ import os
 
 from environs import Env
 
-
 env = Env()
 env.read_env()
 
@@ -31,7 +30,6 @@ SECRET_KEY = env.str('SECRET_KEY')
 DEBUG = env.bool('DEBUG', False)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
-
 
 # Application definition
 
@@ -81,7 +79,6 @@ DATABASES = {
     'default': env.dj_db_url('DATABASE_URL', 'postgres://...'),
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
@@ -100,7 +97,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
@@ -114,12 +110,34 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
+
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
 STATIC_ROOT = '/static'
 MEDIA_ROOT = '/media'
+
+if env.str('bucket_name', None):
+    INSTALLED_APPS += ['storages']
+
+    AWS_ACCESS_KEY_ID = env.str('access_key')
+    AWS_SECRET_ACCESS_KEY = env.str('secret_key')
+    AWS_STORAGE_BUCKET_NAME = env.str('bucket_name')
+    AWS_S3_ENDPOINT_URL = env.str('endpoint_url', 'https://storage.yandexcloud.net')
+
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net'
+
+    AWS_LOCATION = 'django_app'
+
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
