@@ -9,3 +9,4 @@ __pycache__/
 /instructions.txt
 /cloud_deployment/dev/django-secrets.yaml
 /cloud_deployment/dev/django-config.yaml
+/cloud_deployment/dev/nginx-config.yaml

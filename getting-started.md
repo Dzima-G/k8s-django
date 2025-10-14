@@ -12,11 +12,10 @@
 
 ## 🧱 1. Dev-версия
 
-Для запуска используйте готовые манифесты из каталога:
-
-```bash
-  cloud_deployment/dev/
-```
+>
+>📁 Каталог `cloud_deployment/dev/` предназначен для запуска и отладки проекта с использованием кластера K8s Yandex Cloud.
+>
+>В нём находятся необходимые файлы docker-compose.yaml и связанные конфигурации для быстрого старта.
 
 ---
 
@@ -93,15 +92,50 @@ data:
 
 Nginx используется как обратный прокси для Django-приложения.
 
+🔧 **Конфигурация Nginx**
+
+Создайте файл cloud_deployment/dev/main-nginx-config со следующим содержимым:
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: main-nginx-config
+  namespace: <YOUR-NAMESPACE>
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes  2;
+
+    events {
+      worker_connections  10240;
+    }
+
+    http {
+      server {
+        listen       80;
+        server_name  localhost;
+
+        location / {
+          proxy_pass http://django-service;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        }
+      }
+    }
+```
+**Применение манифестов Nginx:**
 ```bash
-  kubectl apply -f nginx.yaml -n <YOUR-NAMESPACE>
-  kubectl apply -f nginx-service.yaml -n <YOUR-NAMESPACE>
+kubectl apply -f nginx.yaml -n <YOUR-NAMESPACE>
+kubectl apply -f nginx-service.yaml -n <YOUR-NAMESPACE>
+kubectl apply -f nginx-config.yaml -n <YOUR-NAMESPACE>
 ```
 
 Проверить, что сервис создан:
 
 ```bash
-  kubectl get svc -n <YOUR-NAMESPACE>
+kubectl get svc -n <YOUR-NAMESPACE>
 ```
 
 ---
@@ -158,8 +192,8 @@ image: dzimag/django-app-k8s:latest
 **Примените манифесты:**
 
 ```bash
-  kubectl apply -f django-services.yaml -n <YOUR-NAMESPACE>
-  kubectl apply -f django-deployment.yaml -n <YOUR-NAMESPACE>
+kubectl apply -f django-services.yaml -n <YOUR-NAMESPACE>
+kubectl apply -f django-deployment.yaml -n <YOUR-NAMESPACE>
 ```
 
 ---
@@ -217,9 +251,9 @@ image: dzimag/django-app-k8s:latest
 ### Проверить деплой:
 
 ```bash
-  kubectl get deployments -n <YOUR-NAMESPACE>
-  kubectl get pods -n <YOUR-NAMESPACE>
-  kubectl get svc -n <YOUR-NAMESPACE>
+kubectl get deployments -n <YOUR-NAMESPACE>
+kubectl get pods -n <YOUR-NAMESPACE>
+kubectl get svc -n <YOUR-NAMESPACE>
 ```
 
 Все поды должны иметь статус `Running`.
@@ -227,13 +261,13 @@ image: dzimag/django-app-k8s:latest
 ### Проверить версию образа:
 
 ```bash
-  kubectl describe pod <DJANGO-POD> -n <YOUR-NAMESPACE> | grep Image
+kubectl describe pod <DJANGO-POD> -n <YOUR-NAMESPACE> | grep Image
 ```
 
 ### Проверить доступность приложения:
 
 ```bash
-  curl http://<EXTERNAL-IP>
+curl http://<EXTERNAL-IP>
 ```
 
 ---
@@ -243,7 +277,7 @@ image: dzimag/django-app-k8s:latest
 Просмотреть логи приложения:
 
 ```bash
-  kubectl logs <DJANGO-POD> -n <YOUR-NAMESPACE>
+kubectl logs <DJANGO-POD> -n <YOUR-NAMESPACE>
 ```
 
 Если используется Gunicorn:
