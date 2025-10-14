@@ -262,4 +262,8 @@ kubectl logs <NGINX-POD> -n <YOUR-NAMESPACE>
 
 После выполнения шагов приложение будет развернуто в вашем namespace и доступно по IP или domain из сервиса Nginx.
 
+[Тестовый вариант сайта развернут здесь](https://edu-dmitrij-gukalin.yc-sirius-dev.pelid.team/)
+
+[Выделенные ресурсы облачной инфраструктуры](https://sirius-env-registry.website.yandexcloud.net/edu-dmitrij-gukalin.html)
+
 ---

@@ -314,3 +314,7 @@ image: dzimag/django-app-k8s:latest
   kubectl exec -it <DJANGO-POD> -n <YOUR-NAMESPACE> -- python manage.py createsuperuser
 ```
 Подробнее см. [руководство по настройке](./getting-started.md)
+
+[Тестовый вариант сайта развернут здесь](https://edu-dmitrij-gukalin.yc-sirius-dev.pelid.team/)
+
+[Выделенные ресурсы облачной инфраструктуры](https://sirius-env-registry.website.yandexcloud.net/edu-dmitrij-gukalin.html)
