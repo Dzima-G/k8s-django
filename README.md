@@ -19,7 +19,6 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 - **`DEBUG`** — настройка Django для включения отладочного режима.  
   Принимает значения `TRUE` или `FALSE`.  
   [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-DEBUG)
-
 - **`ALLOWED_HOSTS`** — настройка Django со списком разрешённых адресов.  
   Если запрос прилетит на другой адрес, то сайт ответит ошибкой **400 Bad Request**.  
   Можно перечислить несколько адресов через запятую, например: `127.0.0.1,192.168.0.1,site.test`
@@ -325,6 +324,12 @@ image: dzimag/django-app-k8s:latest
 ```shell
   kubectl exec -it <DJANGO-POD> -n <YOUR-NAMESPACE> -- python manage.py createsuperuser
 ```
+
+**Настроить очистку сессий (*CronJob*):**
+```shell
+kubectl apply -f django-clearsessions.yaml -n <YOUR-NAMESPACE>
+```  
+
 Подробнее см. [руководство по настройке](./getting-started.md)
 
 [Тестовый вариант сайта развернут здесь](https://edu-dmitrij-gukalin.yc-sirius-dev.pelid.team/)
