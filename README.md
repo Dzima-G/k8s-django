@@ -32,7 +32,7 @@ Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 ---
 
 # Запустить сайт для локальной разработки
-## 🐳 Запуск локально в Doker
+## 🐳 Запуск локально в Docker
 
 >
 >📁 Каталог local_deployment/docker_compose предназначен для локального запуска и отладки проекта в контейнерах Docker.
